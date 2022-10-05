@@ -15,6 +15,7 @@ from contextlib import contextmanager, nullcontext
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+from slugify import slugify
 
 
 def chunk(it, size):
@@ -210,6 +211,7 @@ def main():
     n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     if not opt.from_file:
         prompt = opt.prompt
+        seed = opt.seed
         assert prompt is not None
         data = [batch_size * [prompt]]
 
@@ -272,12 +274,12 @@ def main():
                     grid = rearrange(grid, 'n b c h w -> (n b) c h w')
                     
                     for i in range(grid.size(0)):
-                        save_image(grid[i, :, :, :], os.path.join(outpath,opt.prompt+'_{}.png'.format(i)))
+                        save_image(grid[i, :, :, :], os.path.join(outpath,str(opt.seed)+"_"+slugify(opt.prompt)[0:50]+"_"+slugify(str(tic))+'_{}.png'.format(i)))
                     grid = make_grid(grid, nrow=n_rows)
 
                     # to image
                     grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                    Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{prompt.replace(" ", "-")}-{grid_count:04}.jpg'))
+                    Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{str(seed)}_{slugify(prompt)[0:50]}_{slugify(str(tic))}_{grid_count:04}.jpg'))
                     grid_count += 1
                     
                     
